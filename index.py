@@ -234,9 +234,6 @@ class Sign(Base):
 
 
 # 获取要执行兑换的cookie
-pattern_pin = re.compile(r'pt_pin=([\w\W]*?);')
-
-
 def get_cookie():
     ck_list = []
     cookie = None
@@ -260,7 +257,7 @@ if __name__ == '__main__':
     # 此处填米游社的COOKIE
     # 注: Github Actions用户请到Settings->Secrets里设置,Name=COOKIE,Value=<获取的值>
     # 多个账号的COOKIE值之间用 # 号隔开,例如: 1#2#3#4
-    COOKIE = "#".join(get_cookie)
+    COOKIE = "#".join(get_cookie())
 
     if os.environ.get('COOKIE', '') != '':
         COOKIE = os.environ['COOKIE']
