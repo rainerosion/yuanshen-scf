@@ -241,10 +241,9 @@ def get_cookie():
     for ck in cookies:
         if ck.get('status') == 0:
             ck_list.append(ck.get("value"))
-    print('共配置{}条CK,已载入用户[{}]'.format(len(ck_list)))
     if len(ck_list == 0):
         print('共配置{}条CK,请添加环境变量,或查看环境变量状态'.format(len(ck_list)))
-    return "".join(ck_list)
+    return ck_list
 
 
 if __name__ == '__main__':
