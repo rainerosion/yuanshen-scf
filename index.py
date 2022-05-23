@@ -1,12 +1,16 @@
-'''
+"""
+cron: 10 12 * * * *
+new Env('米游社原神签到');
+
 @File                : genshin.py
 @Github              : https://github.com/y1ndan/genshin-impact-helper
 @Last modified by    : y1ndan
 @Last modified time  : 2021-01-13 11:10:30
-'''
+"""
 import hashlib
 import json
 import random
+import re
 import string
 import time
 import uuid
@@ -17,6 +21,7 @@ from requests.exceptions import HTTPError
 
 from settings import log, CONFIG
 from notify import Notify
+from ql_api import get_envs, disable_env, post_envs, put_envs
 
 
 def hexdigest(text):
@@ -79,7 +84,7 @@ class Roles(Base):
                 continue
             except KeyError as error:
                 log.error(
-                    'Wrong response to get game roles, retry %s time(s)...'% i)
+                    'Wrong response to get game roles, retry %s time(s)...' % i)
                 log.error('response is %s' % error)
                 continue
             except Exception as error:
@@ -93,7 +98,7 @@ class Roles(Base):
                 'Maximum retry times have been reached, error is %s ' % error)
             raise Exception(error)
         if response.get(
-            'retcode', 1) != 0 or response.get('data', None) is None:
+                'retcode', 1) != 0 or response.get('data', None) is None:
             raise Exception(response['message'])
 
         log.info('账号信息获取完毕')
@@ -119,7 +124,7 @@ class Sign(Base):
     def get_header(self):
         header = super(Sign, self).get_header()
         header.update({
-            'x-rpc-device_id':str(uuid.uuid3(
+            'x-rpc-device_id': str(uuid.uuid3(
                 uuid.NAMESPACE_URL, self._cookie)).replace('-', '').upper(),
             # 1:  ios
             # 2:  android
@@ -145,7 +150,7 @@ class Sign(Base):
         # cn_qd01:  世界树
         self._region_list = [(i.get('region', 'NA')) for i in role_list]
         self._region_name_list = [(i.get('region_name', 'NA'))
-            for i in role_list]
+                                  for i in role_list]
         self._uid_list = [(i.get('game_uid', 'NA')) for i in role_list]
 
         log.info('准备获取签到信息...')
@@ -228,7 +233,25 @@ class Sign(Base):
         return CONFIG.MESSGAE_TEMPLATE
 
 
-def main_handler(event, context):
+# 获取要执行兑换的cookie
+pattern_pin = re.compile(r'pt_pin=([\w\W]*?);')
+
+
+def get_cookie():
+    ck_list = []
+    cookie = None
+    cookies = get_envs("MIHOYO_COOKIE")
+    for ck in cookies:
+        if ck.get('status') == 0:
+            ck_list.append(ck.get("value"))
+    print('共配置{}条CK,已载入用户[{}]'.format(len(ck_list)))
+    if len(ck_list == 0):
+        print('共配置{}条CK,请添加环境变量,或查看环境变量状态'.format(len(ck_list)))
+    return "".join(ck_list)
+
+
+if __name__ == '__main__':
+    # def main_handler(event, context):
     log.info('任务开始')
     notify = Notify()
     msg_list = []
@@ -237,7 +260,7 @@ def main_handler(event, context):
     # 此处填米游社的COOKIE
     # 注: Github Actions用户请到Settings->Secrets里设置,Name=COOKIE,Value=<获取的值>
     # 多个账号的COOKIE值之间用 # 号隔开,例如: 1#2#3#4
-    COOKIE = ''
+    COOKIE = "#".join(get_cookie)
 
     if os.environ.get('COOKIE', '') != '':
         COOKIE = os.environ['COOKIE']
